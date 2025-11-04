@@ -2,12 +2,3 @@ pandas
 numpy
 xlsxwriter
 openpyxl
-matplotlib
-seaborn
-scipy
-scikit-learn
-ta
-talib
-requests
-beautifulsoup4
-lxml
