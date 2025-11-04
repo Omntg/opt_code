@@ -56,11 +56,11 @@ for sembol in hisse_listesi:
                 'high': 'HIGH_TL',
                 'low': 'LOW_TL',
                 'close': 'CLOSING_TL',
-                'volume': 'VOLUME_T'
+                'volume': 'VOLUME_TL'
             }, inplace=True)
 
             # 4. Sütunları istenen sıraya getir (CODE sütunu başa gelsin)
-            df_yeni = df_yeni[['CODE', 'DATE', 'HIGH_TL', 'LOW_TL', 'CLOSING_TL', 'VOLUME_T']]
+            df_yeni = df_yeni[['CODE', 'DATE', 'HIGH_TL', 'LOW_TL', 'CLOSING_TL', 'VOLUME_TL']]
             
             # Hazırlanan veriyi listeye ekle
             tum_veriler.append(df_yeni)
