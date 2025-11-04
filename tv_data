@@ -1,11 +1,12 @@
 from tvDatafeed import TvDatafeed, Interval
 import pandas as pd
+import os
 
 # --- ADIM 1: TRADINGVIEW GİRİŞ BİLGİLERİNİZİ GİRİN ---
 # Lütfen aşağıdaki alanları kendi TradingView kullanıcı adı ve şifrenizle doldurun.
 
-username = ''  # <-- github secret
-password = ''  # <-- github secret
+username = os.environ.get('TRADINGVIEW_USERNAME', '')
+password = os.environ.get('TRADINGVIEW_PASSWORD', '')
 
 # Giriş yaparak TvDatafeed nesnesini oluşturun
 try:
