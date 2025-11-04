@@ -24,7 +24,7 @@ hisse_listesi = ['A1CAP', 'A1YEN', 'AEFES']
 # Veri çekme parametreleri
 borsa = 'BIST'
 zaman_araligi = Interval.in_daily  # 1 gunluk veri
-bar_sayisi = 2000  # Her hisse için çekilecek veri sayısı
+bar_sayisi = 700  # Her hisse için çekilecek veri sayısı
 excel_dosya_adi = '1d_data.xlsx'
 
 # --- ADIM 3: VERİLERİ ÇEK, KOLONLARI DÜZENLE VE BİRLEŞTİR ---
