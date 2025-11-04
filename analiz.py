@@ -983,7 +983,7 @@ def main():
                     print(f"Warning: Found {len(non_numeric)} non-numeric values in column {col}")
                     print(f"Sample values: {non_numeric[col].head(5).tolist()}")
     except FileNotFoundError:
-        print("ERROR: 'hisse_verileri_2y.xlsx' file not found!")
+        print("ERROR: '1d_data.xlsx' file not found!")
         return
     
     df['DATE'] = pd.to_datetime(df['DATE'])
