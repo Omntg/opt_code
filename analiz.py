@@ -973,7 +973,7 @@ class TREFAnalyzer:
 
 def main():
     try:
-        df = pd.read_excel('hisse_verileri_2y.xlsx')
+        df = pd.read_excel('1d_data.xlsx.xlsx')
         print(f"Data loaded: {len(df)} rows, {df['CODE'].nunique()} different stocks")
         
         for col in ['CLOSING_TL', 'HIGH_TL', 'LOW_TL', 'VOLUME_TL']:
