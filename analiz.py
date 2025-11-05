@@ -1182,7 +1182,6 @@ def main():
                 print(f"  Buy Signals:  {buy_count:3d} ({buy_pct:5.1f}%)")
                 print(f"  Sell Signals: {sell_count:3d} ({sell_pct:5.1f}%)")
     
-    print("\n" + "="*80)
         # Supabase Database Integration
     if SUPABASE_AVAILABLE:
         try:
