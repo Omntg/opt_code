@@ -91,40 +91,31 @@ class SupabaseHelper:
                 logger.warning("⚠️ Kaydedilecek analiz sonucu bulunamadı")
                 return False
             
-            # Tarihi belirle (bugün)
-            analysis_date = datetime.now().strftime('%Y-%m-%d')
-            
-            # Veri hazırlama
+            # Veri hazırlama - analiz.py'deki kolon isimlerini kullan
             records = []
             for _, row in results_df.iterrows():
                 record = {
-                    'stock_symbol': str(row['Stock Symbol']),
-                    'analysis_date': analysis_date,
-                    'vidya_signal': str(row['VIDYA Signal']) if pd.notna(row['VIDYA Signal']) else None,
-                    'vidya_bars_ago': int(row['VIDYA Signal – Bars Ago']) if pd.notna(row['VIDYA Signal – Bars Ago']) else None,
-                    'trend_signal': str(row['Trend Signal']) if pd.notna(row['Trend Signal']) else None,
-                    'trend_bars_ago': int(row['Trend Signal – Bars Ago']) if pd.notna(row['Trend Signal – Bars Ago']) else None,
-                    'linrs_signal': str(row['linRS Signal']) if pd.notna(row['linRS Signal']) else None,
-                    'linrs_bars_ago': int(row['linRS Signal – Bars Ago']) if pd.notna(row['linRS Signal – Bars Ago']) else None,
-                    'rmt_signal': str(row['RMT Signal']) if pd.notna(row['RMT Signal']) else None,
-                    'rmt_bars_ago': int(row['RMT Signal – Bars Ago']) if pd.notna(row['RMT Signal – Bars Ago']) else None,
-                    'kalman_signal': str(row['Kalman Filter Signal']) if pd.notna(row['Kalman Filter Signal']) else None,
-                    'kalman_bars_ago': int(row['Kalman Signal – Bars Ago']) if pd.notna(row['Kalman Signal – Bars Ago']) else None,
-                    'tref_signal': str(row['TREF Signal']) if pd.notna(row['TREF Signal']) else None,
-                    'tref_bars_ago': int(row['TREF Signal – Bars Ago']) if pd.notna(row['TREF Signal – Bars Ago']) else None,
-                    'wma_percentage_diff': float(row['WMA Percentage Diff']) if pd.notna(row['WMA Percentage Diff']) else None,
-                    'wma_filter_duration': int(row['WMA Filter Duration']) if pd.notna(row['WMA Filter Duration']) else None,
-                    'lrb_percentage_diff': float(row['LRB Percentage Diff']) if pd.notna(row['LRB Percentage Diff']) else None,
-                    'lrb_filter_duration': int(row['LRB Filter Duration']) if pd.notna(row['LRB Filter Duration']) else None,
-                    'finh_percentage_diff': float(row['FINH Percentage Diff']) if pd.notna(row['FINH Percentage Diff']) else None,
-                    'finh_filter_duration': int(row['FINH Filter Duration']) if pd.notna(row['FINH Filter Duration']) else None
+                    'ticker': str(row['ticker']),
+                    'date': pd.to_datetime(row['date']).strftime('%Y-%m-%d'),
+                    'wma_percentage_diff': float(row['wma_percentage_diff']) if pd.notna(row['wma_percentage_diff']) else None,
+                    'wma_filter_duration': int(row['wma_filter_duration']) if pd.notna(row['wma_filter_duration']) else None,
+                    'lrb_percentage_diff': float(row['lrb_percentage_diff']) if pd.notna(row['lrb_percentage_diff']) else None,
+                    'lrb_filter_duration': int(row['lrb_filter_duration']) if pd.notna(row['lrb_filter_duration']) else None,
+                    'finh_percentage_diff': float(row['finh_percentage_diff']) if pd.notna(row['finh_percentage_diff']) else None,
+                    'finh_filter_duration': int(row['finh_filter_duration']) if pd.notna(row['finh_filter_duration']) else None,
+                    'vidya_signal': int(row.get('vidya_signal', 0)),
+                    'trend_signal': int(row.get('trend_signal', 0)),
+                    'linrs_signal': int(row.get('linrs_signal', 0)),
+                    'rmt_signal': int(row.get('rmt_signal', 0)),
+                    'kalman_filter_signal': int(row.get('kalman_filter_signal', 0)),
+                    'tref_signal': int(row.get('tref_signal', 0))
                 }
                 records.append(record)
             
             # Toplu kayıt (upsert ile)
             result = self.supabase.table('analysis_results').upsert(
                 records,
-                on_conflict='stock_symbol,analysis_date'
+                on_conflict='ticker,date'
             ).execute()
             
             logger.info(f"✅ {len(records)} analiz sonucu başarıyla kaydedildi")
@@ -135,8 +126,7 @@ class SupabaseHelper:
             return False
 
     def save_workflow_log(self, workflow_run_id, status, execution_time_seconds=None, 
-                         stocks_processed=None, analysis_completed=False, error_message=None,
-                         files_created=None, git_commit_hash=None):
+                         stocks_processed=None, analysis_completed=None, files_created=None, error_message=None):
         """
         Workflow çalışma loglarını workflow_logs tablosuna kaydet
         
@@ -145,10 +135,9 @@ class SupabaseHelper:
             status: 'success' veya 'failure'
             execution_time_seconds: Çalışma süresi (saniye)
             stocks_processed: İşlenen hisse sayısı
-            analysis_completed: Analiz tamamlandı mı
+            analysis_completed: Analiz tamamlanan sayısı
+            files_created: Oluşturulan dosyalar listesi
             error_message: Hata mesajı
-            files_created: Oluşturulan dosyalar
-            git_commit_hash: Git commit hash
         """
         try:
             log_record = {
@@ -157,12 +146,17 @@ class SupabaseHelper:
                 'execution_time_seconds': execution_time_seconds,
                 'stocks_processed': stocks_processed,
                 'analysis_completed': analysis_completed,
-                'error_message': error_message,
                 'files_created': files_created,
-                'git_commit_hash': git_commit_hash
+                'error_message': error_message
             }
             
-            result = self.supabase.table('workflow_logs').insert(log_record).execute()
+            # None değerleri temizle
+            log_record = {k: v for k, v in log_record.items() if v is not None}
+            
+            result = self.supabase.table('workflow_logs').upsert(
+                log_record,
+                on_conflict='workflow_run_id'
+            ).execute()
             logger.info(f"✅ Workflow log başarıyla kaydedildi: {status}")
             return True
             
