@@ -1,6 +1,6 @@
 """
-Supabase Database Integration Helper
-====================================
+Supabase Database Integration Helper - FINAL VERSION
+====================================================
 Trading verilerini Supabase veritabanına kaydetmek için yardımcı fonksiyonlar.
 Bu dosyayı GitHub repository'nize yükleyin.
 """
@@ -91,12 +91,12 @@ class SupabaseHelper:
                 logger.warning("⚠️ Kaydedilecek analiz sonucu bulunamadı")
                 return False
             
-            # Veri hazırlama - analiz.py'deki kolon isimlerini kullan
+            # Veri hazırlama - gerçek Supabase kolon adlarını kullan
             records = []
             for _, row in results_df.iterrows():
                 record = {
-                    'ticker': str(row['ticker']),
-                    'date': pd.to_datetime(row['date']).strftime('%Y-%m-%d'),
+                    'stock_symbol': str(row.get('ticker', row.get('stock_symbol', ''))),
+                    'analysis_date': pd.to_datetime(row['date']).strftime('%Y-%m-%d'),
                     'wma_percentage_diff': float(row['wma_percentage_diff']) if pd.notna(row['wma_percentage_diff']) else None,
                     'wma_filter_duration': int(row['wma_filter_duration']) if pd.notna(row['wma_filter_duration']) else None,
                     'lrb_percentage_diff': float(row['lrb_percentage_diff']) if pd.notna(row['lrb_percentage_diff']) else None,
@@ -107,7 +107,7 @@ class SupabaseHelper:
                     'trend_signal': int(row.get('trend_signal', 0)),
                     'linrs_signal': int(row.get('linrs_signal', 0)),
                     'rmt_signal': int(row.get('rmt_signal', 0)),
-                    'kalman_filter_signal': int(row.get('kalman_filter_signal', 0)),
+                    'kalman_signal': int(row.get('kalman_filter_signal', row.get('kalman_signal', 0))),
                     'tref_signal': int(row.get('tref_signal', 0))
                 }
                 records.append(record)
@@ -115,7 +115,7 @@ class SupabaseHelper:
             # Toplu kayıt (upsert ile)
             result = self.supabase.table('analysis_results').upsert(
                 records,
-                on_conflict='ticker,date'
+                on_conflict='stock_symbol,analysis_date'
             ).execute()
             
             logger.info(f"✅ {len(records)} analiz sonucu başarıyla kaydedildi")
@@ -153,10 +153,8 @@ class SupabaseHelper:
             # None değerleri temizle
             log_record = {k: v for k, v in log_record.items() if v is not None}
             
-            result = self.supabase.table('workflow_logs').upsert(
-                log_record,
-                on_conflict='workflow_run_id'
-            ).execute()
+            # INSERT kullan (Upsert değil)
+            result = self.supabase.table('workflow_logs').insert(log_record).execute()
             logger.info(f"✅ Workflow log başarıyla kaydedildi: {status}")
             return True
             
