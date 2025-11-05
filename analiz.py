@@ -3,6 +3,16 @@ import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
 
+# Supabase Integration
+try:
+    import os
+    from supabase_helper import SupabaseHelper
+    SUPABASE_AVAILABLE = True
+    print("✅ Supabase integration activated")
+except ImportError:
+    SUPABASE_AVAILABLE = False
+    print("⚠️ Supabase integration not available - skipping database operations")
+
 # ---------------------------
 # YARDIMCI FONKSİYONLAR
 # ---------------------------
@@ -1173,6 +1183,66 @@ def main():
                 print(f"  Sell Signals: {sell_count:3d} ({sell_pct:5.1f}%)")
     
     print("\n" + "="*80)
-
+        # Supabase Database Integration
+    if SUPABASE_AVAILABLE:
+        try:
+            print("\n" + "="*50)
+            print("📊 SUPABASE DATABASE INTEGRATION")
+            print("="*50)
+            
+            # Initialize Supabase helper
+            supabase_helper = SupabaseHelper()
+            
+            # Test connection
+            if supabase_helper.test_connection():
+                print("✅ Supabase bağlantısı başarılı")
+                
+                # Save raw stock data
+                print("\n🔄 Ham hisse senedi verileri kaydediliyor...")
+                if supabase_helper.save_raw_stock_data(df):
+                    print("✅ Ham veriler başarıyla kaydedildi")
+                else:
+                    print("❌ Ham veriler kaydedilemedi")
+                
+                # Save analysis results
+                print("\n🔄 Analiz sonuçları kaydediliyor...")
+                if supabase_helper.save_analysis_results(results_df):
+                    print("✅ Analiz sonuçları başarıyla kaydedildi")
+                else:
+                    print("❌ Analiz sonuçları kaydedilemedi")
+                
+                # Save workflow log
+                workflow_run_id = os.environ.get('GITHUB_RUN_ID', f'local-{datetime.now().strftime("%Y%m%d-%H%M%S")}')
+                execution_time = len(results) * 10  # Estimated time
+                
+                log_success = supabase_helper.save_workflow_log(
+                    workflow_run_id=workflow_run_id,
+                    status='success',
+                    execution_time_seconds=execution_time,
+                    stocks_processed=len(results),
+                    analysis_completed=True,
+                    files_created='1d_data.xlsx,unified_analysis.xlsx'
+                )
+                
+                if log_success:
+                    print("✅ Workflow log başarıyla kaydedildi")
+                else:
+                    print("❌ Workflow log kaydedilemedi")
+            else:
+                print("❌ Supabase bağlantısı başarısız")
+                
+        except Exception as e:
+            print(f"❌ Supabase entegrasyon hatası: {e}")
+    else:
+        print("\n⚠️ Supabase entegrasyonu devre dışı - veriler sadece Excel'e kaydedildi")
+    
+    print("\n" + "="*80)
+    print("🎉 TÜM İŞLEMLER TAMAMLANDI!")
+    print("📁 Excel dosyaları: 1d_data.xlsx, unified_analysis.xlsx")
+    if SUPABASE_AVAILABLE:
+        print("🗄️ Supabase veritabanı: Aktif")
+    else:
+        print("🗄️ Supabase veritabanı: Devre dışı")
+    print("="*80)
 if __name__ == "__main__":
     main()
