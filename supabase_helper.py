@@ -107,6 +107,7 @@ class SupabaseHelper:
                 print(f"✅ Saved analysis for {record['stock_symbol']}")
             except Exception as e:
                 print(f"❌ Error saving analysis for {record['stock_symbol']}: {e}")
+
     
     def save_workflow_log(self, workflow_run_id, status, message):
         """Workflow log kaydet"""
@@ -123,3 +124,14 @@ class SupabaseHelper:
             self.supabase.table('workflow_logs').upsert(record, on_conflict='workflow_run_id').execute()
         except Exception as e:
             print(f"❌ Error saving workflow log: {e}")
+    def test_connection(self):
+        """Supabase bağlantısını test et"""
+        if self.supabase is None:
+            return False
+        try:
+            # Basit bir sorgu ile bağlantıyı test et
+            result = self.supabase.table('raw_stock_data').select('count').limit(1).execute()
+            return True
+        except Exception as e:
+            print(f"❌ Connection test failed: {e}")
+            return False
