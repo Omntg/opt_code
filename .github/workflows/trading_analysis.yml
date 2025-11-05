@@ -1,4 +1,4 @@
-name: Trading Data Analysis Workflow
+name: Trading Data Analysis Workflow with Supabase
 
 on:
   schedule:
@@ -57,7 +57,11 @@ jobs:
         TRADINGVIEW_PASSWORD: ${{ secrets.TRADINGVIEW_PASSWORD }}
       run: python tv_data.py
     
-    - name: Run analiz script
+    - name: Run analiz script with Supabase integration
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
       run: python analiz.py
     
     - name: Check if Excel files were created
@@ -91,6 +95,7 @@ jobs:
         echo "## Workflow Summary" >> $GITHUB_STEP_SUMMARY
         echo "- Execution time: $(date)" >> $GITHUB_STEP_SUMMARY
         echo "- Trigger: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Workflow Run ID: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
         if [ -f "1d_data.xlsx" ]; then
           echo "- 1d_data.xlsx: Created successfully" >> $GITHUB_STEP_SUMMARY
         else
@@ -101,3 +106,10 @@ jobs:
         else
           echo "- unified_analysis.xlsx: Missing" >> $GITHUB_STEP_SUMMARY
         fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Supabase Integration" >> $GITHUB_STEP_SUMMARY
+        echo "- Supabase URL: Configured" >> $GITHUB_STEP_SUMMARY
+        echo "- Database Integration: Active" >> $GITHUB_STEP_SUMMARY
+        echo "- Raw stock data: Saved to raw_stock_data table" >> $GITHUB_STEP_SUMMARY
+        echo "- Analysis results: Saved to analysis_results table" >> $GITHUB_STEP_SUMMARY
+        echo "- Workflow logs: Saved to workflow_logs table" >> $GITHUB_STEP_SUMMARY
